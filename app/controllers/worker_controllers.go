@@ -37,7 +37,6 @@ func (controller *Controller) Record(e echo.Context) error {
 	}
 
 	for _, log := range request.Logs {
-		fmt.Printf("%v\n", log)
 		_, err = tx.Exec(ctx, `INSERT INTO public."Logs" (id, region, utterance) VALUES ($1, $2, $3)`, log.Id, log.Region, log.Utterance)
 		if err != nil {
 			e.Logger().Error(err)
@@ -49,13 +48,44 @@ func (controller *Controller) Record(e echo.Context) error {
 	}
 
 	for _, event := range request.Events {
-		fmt.Printf("%v\n", event)
 		_, err = tx.Exec(ctx, `INSERT INTO Public."Events" (id, level, location, category, log_id) VALUES ($1, $2, ST_GeomFromGeoJSON($3), $4, $5)`, event.Id, event.Level, event.Location.AsGeoJSON(), event.Category, event.LogId)
 		if err != nil {
 			e.Logger().Error(err)
 			if err := tx.Rollback(ctx); err != nil {
 				e.Logger().Error(err)
 			}
+
+			go func(event models.Event) {
+				ctx := context.Background()
+				conn, err := controller.db.Acquire(ctx)
+				if err != nil {
+					e.Logger().Error(err)
+					return
+				}
+
+				rows, err := conn.Query(ctx, `
+				SELECT push_token 
+				FROM Public."Users"
+				WHERE ST_DWithin(location::geography, ST_GeomFromGeoJSON($1)::geography, 5 * 1609.34)`, event.Location.AsGeoJSON())
+
+				users := []string{}
+				if !rows.Next() {
+					return
+				}
+				for rows.Next() {
+					var pushToken string
+					if err := rows.Scan(&pushToken); err != nil {
+						e.Logger().Error(err)
+						continue
+					}
+					users = append(users, pushToken)
+				}
+
+				if err := controller.notifier.Broadcast(event, users); err != nil {
+					e.Logger().Error(err)
+				}
+			}(event)
+
 			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("there was an error trying to create an event with id: %v", event.Id))
 		}
 	}
@@ -64,8 +94,6 @@ func (controller *Controller) Record(e echo.Context) error {
 		e.Logger().Error(err)
 		return e.NoContent(http.StatusInternalServerError)
 	}
-
-	// TODO: send users notifications
 
 	return e.NoContent(http.StatusOK)
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/guard-ai/guard-server/pkg"
+	"github.com/guard-ai/guard-server/pkg/notifications"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	pgxuuid "github.com/vgarvardt/pgx-google-uuid/v5"
@@ -11,6 +12,7 @@ import (
 
 type Controller struct {
 	db *pgxpool.Pool
+	notifier *notifications.Notifier
 }
 
 func New() *Controller {
@@ -20,12 +22,19 @@ func New() *Controller {
 		pgxuuid.Register(c.TypeMap())
 		return nil
 	}
+
 	db, err := pgxpool.NewWithConfig(ctx, conf)
 	if err != nil {
 		panic(err)
 	}
 
+	notifier, err := notifications.NewNotifier()
+	if err != nil {
+		panic(err)
+	}
+
 	return &Controller{
-		db: db,
+		db,
+		notifier,
 	} 
 }

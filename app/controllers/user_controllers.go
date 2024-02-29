@@ -11,8 +11,9 @@ import (
 
 func (c *Controller) CreateUser(e echo.Context) error {
 	type Request struct {
-		Id       uuid.UUID    `json:"id"`
-		Location models.Point `json:"location"`
+		Id        uuid.UUID    `json:"id"`
+		Location  models.Point `json:"location"`
+		PushToken string       `json:"push_token"`
 	}
 	request := Request{}
 	if err := e.Bind(&request); err != nil {
@@ -27,7 +28,7 @@ func (c *Controller) CreateUser(e echo.Context) error {
 		return e.NoContent(http.StatusInternalServerError)
 	}
 
-	_, err = conn.Exec(ctx, `INSERT INTO Public."Users" (id, location) VALUES ($1, ST_GeomFromGeoJSON($2))`, request.Id, request.Location.AsGeoJSON())
+	_, err = conn.Exec(ctx, `INSERT INTO Public."Users" (id, location, push_token) VALUES ($1, ST_GeomFromGeoJSON($2))`, request.Id, request.Location.AsGeoJSON(), request.PushToken)
 	if err != nil {
 		e.Logger().Error(err)
 		return e.NoContent(http.StatusInternalServerError)

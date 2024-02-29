@@ -94,4 +94,5 @@ type User struct {
 	LastPing  pgtype.Timestamptz `json:"last_ping"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	Location  Point              `json:"location"`
+	PushToken string             `json:"push_token"`
 }
