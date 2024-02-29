@@ -17,41 +17,41 @@ Asgard bridges worker ingested data and broadcasts notifications when needed.
 All routes related to events
 
 * GET `/events/near/:uuid`
- - Get's all events near a user identified by the URL param `uuid`
- - Response:
- ```
-events: [Event]
- ```
+    - Get's all events near a user identified by the URL param `uuid`
+    - Response:
+     ```
+    events: [Event]
+     ```
 
 ## User
 
 * POST `/user/ping`
- - Updates the user's location
- - Request:
- ```
- id: UUID,
- location: "Lat,Lon"
- ```
+    - Updates the user's location
+    - Request:
+     ```
+     id: UUID,
+     location: "Lat,Lon"
+     ```
 
 * POST `/user`
- - Creates a new user to track their location to send notifications
- - The user id must be present in the `auth` table managed by Supabase
- - Request:
-```
-Id: UUID
-location: "Lat,Lon"
-```
+    - Creates a new user to track their location to send notifications
+    - The user id must be present in the `auth` table managed by Supabase
+    - Request:
+    ```
+    Id: UUID
+    location: "Lat,Lon"
+    ```
 
 ## Worker
 
 * POST `/worker/record`
- - Ingests all new `Logs` and `Events` and sends push notifications to users when appropriate
- - Requires a bearer token only distributed to private workers
- - Request:
- ```
- Logs: [Log]
- Events: [Event]
- ```
+    - Ingests all new `Logs` and `Events` and sends push notifications to users when appropriate
+    - Requires a bearer token only distributed to private workers
+    - Request:
+     ```
+     Logs: [Log]
+     Events: [Event]
+     ```
 
 # Models
 
