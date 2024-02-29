@@ -3,7 +3,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/guard-ai/guard-server/pkg/models"
@@ -15,7 +14,6 @@ func (controller *Controller) EventsNear(e echo.Context) error {
 	conn, err := controller.db.Acquire(ctx)
 	if err != nil {
 		e.Logger().Error(err)
-		log.Printf("%v\n", err)
 		return e.NoContent(http.StatusInternalServerError)
 	}
 	defer conn.Release()
