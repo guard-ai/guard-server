@@ -10,13 +10,12 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type RecordRequest struct {
-	Logs   []models.Log   `json:"logs"`
-	Events []models.Event `json:"events"`
-}
-
 func (controller *Controller) Record(e echo.Context) error {
-	request := RecordRequest{}
+	type Request struct {
+		Logs   []models.Log   `json:"logs"`
+		Events []models.Event `json:"events"`
+	}
+	request := Request{}
 	if err := e.Bind(&request); err != nil {
 		return e.JSON(http.StatusInternalServerError, echo.Map{
 			"message": err.Error(),
