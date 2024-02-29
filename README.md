@@ -4,6 +4,12 @@ Handles all Guard AI traffic between the guard-ai-client and guard-ai-worker (Hi
 Serves several endpoints which interacts with a PostgresDB instance with 3 main records defined in models.
 Asgard bridges worker ingested data and broadcasts notifications when needed.
 
+## Setup
+
+- `go mod tidy`
+- Create a `.env` file populated by `.sample.env` 
+- `go run main.go`
+
 # Endpoints
 
 ## Events
