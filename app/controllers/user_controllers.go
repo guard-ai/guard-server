@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -28,7 +29,8 @@ func (c *Controller) CreateUser(e echo.Context) error {
 		return e.NoContent(http.StatusInternalServerError)
 	}
 
-	_, err = conn.Exec(ctx, `INSERT INTO Public."Users" (id, location, push_token) VALUES ($1, ST_GeomFromGeoJSON($2))`, request.Id, request.Location.AsGeoJSON(), request.PushToken)
+	fmt.Printf("Creating user at location: %s\n", request.Location.AsGeoJSON())
+	_, err = conn.Exec(ctx, `INSERT INTO Public."Users" (id, location, push_token) VALUES ($1, ST_GeomFromGeoJSON($2), $3)`, request.Id, request.Location.AsGeoJSON(), request.PushToken)
 	if err != nil {
 		e.Logger().Error(err)
 		return e.NoContent(http.StatusInternalServerError)

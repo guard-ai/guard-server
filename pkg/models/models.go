@@ -81,12 +81,13 @@ type Log struct {
 }
 
 type Event struct {
-	Id        uuid.UUID          `json:"id"`
-	Level     string             `json:"level"`
-	Location  Point              `json:"location"`
-	Category  string             `json:"category"`
-	LogId     uuid.UUID          `json:"log_id"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	Id          uuid.UUID          `json:"id"`
+	Level       string             `json:"level"`
+	Location    Point              `json:"location"`
+	Category    string             `json:"category"`
+	LogId       uuid.UUID          `json:"log_id"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	Description string             `json:"description"`
 }
 
 type User struct {

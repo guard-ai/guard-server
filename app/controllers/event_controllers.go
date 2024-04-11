@@ -27,7 +27,7 @@ func (controller *Controller) EventsNear(e echo.Context) error {
 	}
 
 	rows, err := conn.Query(ctx, `
-	SELECT id, level, ST_AsGeoJSON(location), category, log_id, created_at
+	SELECT id, level, ST_AsGeoJSON(location), category, log_id, created_at, description
 	FROM Public."Events"
 	WHERE ST_DWithin(location::geography, ST_GeomFromGeoJSON($1)::geography, 5 * 1609.34)`, user.Location.AsGeoJSON())
 	if err != nil {
@@ -40,7 +40,7 @@ func (controller *Controller) EventsNear(e echo.Context) error {
 
 	for rows.Next() {
 		event := models.Event{}
-		err := rows.Scan(&event.Id, &event.Level, &event.Location, &event.Category, &event.LogId, &event.CreatedAt)
+		err := rows.Scan(&event.Id, &event.Level, &event.Location, &event.Category, &event.LogId, &event.CreatedAt, &event.Description)
 		if err != nil {
 			e.Logger().Error(err)
 			continue

@@ -48,51 +48,48 @@ func (controller *Controller) Record(e echo.Context) error {
 	}
 
 	for _, event := range request.Events {
-		_, err = tx.Exec(ctx, `INSERT INTO Public."Events" (id, level, location, category, log_id) VALUES ($1, $2, ST_GeomFromGeoJSON($3), $4, $5)`, event.Id, event.Level, event.Location.AsGeoJSON(), event.Category, event.LogId)
+		_, err = tx.Exec(ctx, `INSERT INTO Public."Events" (id, level, location, category, log_id, description) VALUES ($1, $2, ST_GeomFromGeoJSON($3), $4, $5, $6)`, event.Id, event.Level, event.Location.AsGeoJSON(), event.Category, event.LogId, event.Description)
 		if err != nil {
 			e.Logger().Error(err)
 			if err := tx.Rollback(ctx); err != nil {
 				e.Logger().Error(err)
 			}
+			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("there was an error trying to create an event with id: %v", event.Id))
+		}
 
-			go func(event models.Event) {
-				ctx := context.Background()
-				conn, err := controller.db.Acquire(ctx)
-				if err != nil {
-					e.Logger().Error(err)
-					return
-				}
+		if err := tx.Commit(ctx); err != nil {
+			e.Logger().Error(err)
+			return e.NoContent(http.StatusInternalServerError)
+		}
 
-				rows, err := conn.Query(ctx, `
+		go func(event models.Event) {
+			ctx := context.Background()
+			conn, err := controller.db.Acquire(ctx)
+			if err != nil {
+				e.Logger().Error(err)
+				return
+			}
+
+			rows, err := conn.Query(ctx, `
 				SELECT push_token 
 				FROM Public."Users"
 				WHERE ST_DWithin(location::geography, ST_GeomFromGeoJSON($1)::geography, 5 * 1609.34)`, event.Location.AsGeoJSON())
 
-				users := []string{}
-				if !rows.Next() {
-					return
-				}
-				for rows.Next() {
-					var pushToken string
-					if err := rows.Scan(&pushToken); err != nil {
-						e.Logger().Error(err)
-						continue
-					}
-					users = append(users, pushToken)
-				}
+			users := []string{}
 
-				if err := controller.notifier.Broadcast(event, users); err != nil {
+			for rows.Next() {
+				var pushToken string
+				if err := rows.Scan(&pushToken); err != nil {
 					e.Logger().Error(err)
+					continue
 				}
-			}(event)
+				users = append(users, pushToken)
+			}
 
-			return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("there was an error trying to create an event with id: %v", event.Id))
-		}
-	}
-
-	if err := tx.Commit(ctx); err != nil {
-		e.Logger().Error(err)
-		return e.NoContent(http.StatusInternalServerError)
+			if err := controller.notifier.Broadcast(event, users); err != nil {
+				fmt.Println(err.Error())
+			}
+		}(event)
 	}
 
 	return e.NoContent(http.StatusOK)

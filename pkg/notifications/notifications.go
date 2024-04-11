@@ -22,7 +22,7 @@ func NewNotifier() (*Notifier, error) {
 func (n *Notifier) Broadcast(event models.Event, users []string) error {
 	to := []expo.ExponentPushToken{}
 	for _, user := range users {
-		pushToken, err := expo.NewExponentPushToken(fmt.Sprintf("ExponentPushToken[%s]", user))
+		pushToken, err := expo.NewExponentPushToken(user)
 		if err != nil {
 			continue
 		}
@@ -32,10 +32,10 @@ func (n *Notifier) Broadcast(event models.Event, users []string) error {
 
 	response, err := n.client.Publish(&expo.PushMessage{
 		To:         to,
-		Body:       "",
+		Title:      fmt.Sprintf("%s: %s", event.Level, event.Category),
+		Body:       "Tap for more information!",
 		Data:       map[string]string{},
 		Sound:      "default",
-		Title:      fmt.Sprintf("%s: %s", event.Level, event.Category),
 		TTLSeconds: 15,
 		Priority:   expo.HighPriority,
 		Badge:      0,
